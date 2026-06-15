@@ -1,74 +1,82 @@
-# ShopLite - Starter TP final DevOps
+# ShopLite — Projet DevOps complet
 
-ShopLite est un projet de base pour un TP final DevOps.
+![CI](https://github.com/Hkinsey/TP-Final-CI-CD-YNOV-B3-/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/Hkinsey/TP-Final-CI-CD-YNOV-B3-/actions/workflows/cd.yml/badge.svg)
 
-Les etudiants recoivent uniquement ce socle applicatif :
+Mini application e-commerce industrialisée avec une chaîne DevOps complète : Git, Docker, CI/CD, observabilité, backup et rollback.
 
-- API Node.js / Express
-- Frontend HTML / CSS / JS
-- Script SQL PostgreSQL
-- Un test de sante minimal
-- Une configuration Docker minimale pour lancer le projet
+## Stack technique
 
-Le travail du TP consiste a construire progressivement :
+- API : Node.js / Express
+- Base de données : PostgreSQL 16
+- Frontend : HTML / CSS / JS (Nginx)
+- Reverse proxy : Nginx
+- CI/CD : GitHub Actions
+- Containerisation : Docker + Docker Compose
 
-- Git propre et strategie de branches
-- Ameliorer les Dockerfile API et frontend
-- Ameliorer docker-compose dev / staging / prod
-- CI/CD GitHub Actions
-- tests automatises
-- logs propres
-- securite container
-- backup PostgreSQL
-- rollback sans perte de donnees
-- documentation professionnelle
-
-## Lancement rapide avec Docker
+## Lancement rapide (dev)
 
 ```bash
+cp .env.example .env
 docker compose up -d --build
 ```
 
-Ouvrir :
+Ouvrir : http://localhost:8080
 
-```text
-http://localhost:8080
+## Lancement staging
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
 ```
 
-Tester :
+Ouvrir : http://localhost:8081
+
+## Tester l'API
 
 ```bash
 curl http://localhost:8080/api/health
 curl http://localhost:8080/api/products
 ```
 
-Arreter sans supprimer les donnees :
-
-```bash
-docker compose down
-```
-
-## Lancement hors Docker pour prise en main
+## Tests automatisés
 
 ```bash
 cd api
 npm install
 npm test
-npm start
 ```
 
-API :
+## Backup PostgreSQL
 
-```text
-http://localhost:3000/health
-http://localhost:3000/products
+```bash
+sh scripts/backup.sh
 ```
 
-Frontend :
+Les dumps sont stockés dans `backups/` avec horodatage. Rétention : 7 derniers backups.
 
-Ouvrir `frontend/src/index.html` dans un navigateur ou le servir avec un serveur statique.
+## Rollback
 
-## Important
+```bash
+sh scripts/rollback.sh v1.0.0
+```
 
-Le projet contient maintenant le minimum pour tourner avec Docker.
-Les etudiants doivent l'ameliorer pendant le TP pour atteindre les exigences finales.
+## Environnements
+
+| Environnement | URL locale | Branch/Tag |
+|---|---|---|
+| dev | http://localhost:8080 | feature/* → develop |
+| staging | http://localhost:8081 | develop |
+| production | http://localhost:8082 | tag v* |
+
+## CI/CD
+
+- CI : lint, tests (Node 20 + 22), build Docker, scan Trivy
+- CD : deploy staging sur push develop, deploy prod sur tag v*
+
+## Arrêter sans perdre les données
+
+```bash
+docker compose down
+```
+
+Ne jamais utiliser `docker compose down -v` en production.
