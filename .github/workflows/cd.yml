@@ -1,13 +1,60 @@
-name: CD starter a completer
+# name: CD starter a completer
+
+# on:
+#   workflow_dispatch:
+
+# jobs:
+#   consigne:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Consigne
+#         run: |
+#           echo "Ce workflow est volontairement minimal."
+#           echo "Les etudiants doivent ajouter staging, production simulee, smoke test et rollback."
+
+name: CD
 
 on:
+  push:
+    branches: [develop]
+    tags: ["v*"]
   workflow_dispatch:
 
 jobs:
-  consigne:
+  deploy-staging:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+    environment: staging
     steps:
-      - name: Consigne
+      - uses: actions/checkout@v4
+
+      - name: Build staging images
         run: |
-          echo "Ce workflow est volontairement minimal."
-          echo "Les etudiants doivent ajouter staging, production simulee, smoke test et rollback."
+          docker build -t shoplite-api:staging ./api
+          docker build -t shoplite-frontend:staging ./frontend
+
+      - name: Smoke test staging
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+          sleep 10
+          curl -f http://localhost:8081/api/health || exit 1
+          docker compose -f docker-compose.yml -f docker-compose.staging.yml down
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    needs: deploy-staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag production image
+        run: |
+          docker build -t shoplite-api:${{ github.ref_name }} ./api
+          docker build -t shoplite-frontend:${{ github.ref_name }} ./frontend
+
+      - name: Log deployment
+        run: |
+          echo "Version: ${{ github.ref_name }}" 
+          echo "Date: $(date)"
+          echo "Auteur: ${{ github.actor }}"

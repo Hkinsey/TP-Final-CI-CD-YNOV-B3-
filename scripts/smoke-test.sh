@@ -1,9 +1,11 @@
 #!/bin/sh
 set -eu
 
-BASE_URL="${BASE_URL:-http://localhost:8080}"
+BASE_URL=${1:-"http://localhost:8080"}
 
-curl -fsS "$BASE_URL/api/health"
-curl -fsS "$BASE_URL/api/products"
+echo "Smoke tests sur $BASE_URL..."
 
-echo "Smoke test starter OK"
+curl -f "$BASE_URL/api/health" && echo " /health OK" || exit 1
+curl -f "$BASE_URL/api/products" && echo " /products OK" || exit 1
+
+echo "Tous les smoke tests sont verts"

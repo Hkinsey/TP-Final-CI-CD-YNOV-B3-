@@ -1,9 +1,17 @@
 const request = require("supertest");
 const app = require("../src/app");
 
-test("GET / retourne le nom de l'API", async () => {
-  const response = await request(app).get("/");
+describe("GET /health", () => {
+  test("retourne status 200 avec les checks", async () => {
+    const res = await request(app).get("/health");
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("ok");
+    expect(res.body.checks).toBeDefined();
+    expect(res.body.timestamp).toBeDefined();
+  });
 
-  expect(response.status).toBe(200);
-  expect(response.body.name).toBe("ShopLite API");
+  test("retourne le nom du service", async () => {
+    const res = await request(app).get("/health");
+    expect(res.body.service).toBe("shoplite-api");
+  });
 });
